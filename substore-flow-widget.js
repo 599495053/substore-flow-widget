@@ -99,29 +99,56 @@ async function fetchFlow(ctx, cfg, sub) {
   const stored = readStoredFlow(ctx, name);
   if (stored && stored.total > 0) return buildItem(sub, stored);
 
-  // API 获取
+  // API 获取 — 尝试多种返回格式
+  let apiErr = '';
   try {
     const json = await httpGet(ctx, cfg.baseUrl + '/api/sub/flow/' + encodeURIComponent(name));
-    const raw = json && json.data !== undefined ? json.data : json;
-    const flow = parseFlow(raw);
-    if (flow.total > 0) return buildItem(sub, flow);
-  } catch (_) {}
+    // 尝试从多种嵌套层级提取流量数据
+    const candidates = [];
+    if (json) {
+      candidates.push(json);                            // 直接是流量对象
+      if (json.data !== undefined) candidates.push(json.data);   // { data: {…} }
+      // 双层 data：{ data: { data: {…} } }
+      if (json.data && json.data.data !== undefined) candidates.push(json.data.data);
+    }
+    for (const raw of candidates) {
+      const flow = parseFlow(raw);
+      if (flow.total > 0) { const item = buildItem(sub, flow); return item; }
+    }
+    // 全部候选都没 total
+    const sample = JSON.stringify(candidates[0] || json || {}).slice(0, 120);
+    apiErr = 'API 无有效流量数据 ' + sample;
+  } catch (e) {
+    apiErr = 'API: ' + shortMsg(e);
+  }
 
-  // 直连订阅 URL
+  // 直连订阅 URL — 用 GET 替代 HEAD（Egern 可能不支持 HEAD）
+  let urlErr = '';
   try {
     const url = sub.url || sub.subUserinfo || '';
     const httpUrl = url.split('\n').map((s) => s.trim()).find((s) => /^https?:\/\//i.test(s));
     if (httpUrl) {
-      const resp = await httpHead(ctx, httpUrl);
+      const resp = await ctx.http.get(httpUrl, {
+        headers: { 'User-Agent': 'clash.meta/v1.19.23' },
+        timeout: 8000, redirect: 'follow',
+      });
       const info = getHeader(resp.headers, 'subscription-userinfo');
       if (info) {
         const flow = parseFlowString(info);
         if (flow.total > 0) return buildItem(sub, flow);
+        urlErr = 'URL header 无流量字段';
+      } else {
+        urlErr = 'URL 无 subscription-userinfo';
       }
+    } else {
+      urlErr = '无 HTTP URL';
     }
-  } catch (_) {}
+  } catch (e) {
+    urlErr = 'URL: ' + shortMsg(e);
+  }
 
-  return { name, error: '无法获取流量' };
+  const detail = [apiErr, urlErr].filter(Boolean).join('；');
+  return { name, error: '获取失败 (' + detail + ')' };
 }
 
 function buildItem(sub, flow) {
@@ -487,13 +514,6 @@ async function httpGet(ctx, url) {
   const text = await resp.text();
   if (resp.status < 200 || resp.status >= 300) throw new Error('HTTP ' + resp.status);
   try { return JSON.parse(text); } catch (_) { throw new Error('非 JSON 响应'); }
-}
-
-async function httpHead(ctx, url) {
-  return ctx.http.head(url, {
-    headers: { 'User-Agent': 'clash.meta/v1.19.23' },
-    timeout: 8000, redirect: 'follow',
-  });
 }
 
 function getHeader(headers, name) {
