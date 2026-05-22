@@ -472,17 +472,9 @@ function renderSmallCard(item) {
 
 function renderInline(cfg, item, stale) {
   if (!item) return text('未选择订阅', 'caption1', 'semibold', '#FFFFFF', { maxLines: 1, minScale: 0.5 });
-  if (item.error) return text(displayName(item) + ' · ' + item.error, 'caption1', 'semibold', '#FCA5A5', { maxLines: 1, minScale: 0.5 });
-  const parts = [displayName(item), remainText(item)];
-  if (item.isLongTerm) {
-    parts.push('长期使用');
-  } else {
-    const r = resetShort(item);
-    const e = expireShort(item);
-    if (r !== '未知') parts.push('重置 ' + r);
-    if (e !== '未知') parts.push('到期 ' + e);
-  }
-  return text(parts.join(' · '), 'caption1', 'semibold', stale ? '#FDE68A' : '#FFFFFF', { maxLines: 1, minScale: 0.45 });
+  if (item.error) return text(displayName(item) + ' · 错误', 'caption1', 'semibold', '#FCA5A5', { maxLines: 1, minScale: 0.5 });
+  const pct = ratioText(item.remainRatio);
+  return text(displayName(item) + ' ' + pct, 'caption1', 'semibold', stale ? '#FDE68A' : '#FFFFFF', { maxLines: 1, minScale: 0.5 });
 }
 
 function renderCircular(item, stale, cfg) {
@@ -505,16 +497,14 @@ function renderAccessoryRectangular(cfg, item, stale) {
   if (!item) return missingCard('未选择订阅');
   if (item.error) return errorCard(item.name || '订阅', item.error);
 
-  const lines = [remainText(item)];
-  if (item.isLongTerm) {
-    lines.push('长期使用');
-  } else {
-    const r = resetShort(item);
-    const e = expireShort(item);
-    const parts = [];
-    if (r !== '未知') parts.push('重置 ' + r);
-    if (e !== '未知') parts.push('到期 ' + e);
-    if (parts.length) lines.push(parts.join(' · '));
+  const info = item.isLongTerm ? '长期使用' : expireLine(item);
+
+  const children = [
+    text(displayName(item), 'caption1', 'semibold', '#FFFFFF', { maxLines: 1, minScale: 0.55 }),
+    text(remainText(item), 'headline', 'bold', colorForRemain(item.remainRatio), { maxLines: 1, minScale: 0.6 }),
+  ];
+  if (info) {
+    children.push(text(info, 'caption2', 'regular', '#CBD5E1', { maxLines: 1, minScale: 0.5 }));
   }
 
   return {
@@ -524,11 +514,7 @@ function renderAccessoryRectangular(cfg, item, stale) {
     padding: 8,
     backgroundColor: '#FFFFFF10',
     borderRadius: 12,
-    children: [
-      text(displayName(item), 'caption1', 'semibold', '#FFFFFF', { maxLines: 1, minScale: 0.55 }),
-      text(lines[0], 'headline', 'bold', colorForRemain(item.remainRatio), { maxLines: 1, minScale: 0.6 }),
-      lines[1] ? text(lines[1], 'caption2', 'regular', '#CBD5E1', { maxLines: 1, minScale: 0.5 }) : { type: 'spacer', length: 0 },
-    ],
+    children,
   };
 }
 
@@ -660,9 +646,13 @@ function expireLine(item) {
   const parts = [];
   const r = resetText(item);
   if (r) parts.push('重置 ' + r);
-  const e = item.isLongTerm ? '长期使用' : expireText(item);
-  if (e) parts.push(e);
-  return parts.join(' · ');
+  if (item.isLongTerm) {
+    parts.push('长期使用');
+  } else {
+    const e = expireText(item);
+    if (e) parts.push('到期 ' + e);
+  }
+  return parts.join(' · ') || '—';
 }
 
 function ratioText(remainRatio) {
