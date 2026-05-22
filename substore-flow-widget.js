@@ -419,9 +419,12 @@ function renderCard(item) {
     padding: [9, 10],
     backgroundColor: '#FFFFFF12',
     borderRadius: 12,
+    flex: 1,
     children: [
       text(name, 'subheadline', 'semibold', '#FFFFFF', { maxLines: 1, minScale: 0.6 }),
+      { type: 'spacer' },
       text(remainText(item), 'subheadline', 'bold', colorForRemain(item.remainRatio), { maxLines: 1, minScale: 0.6 }),
+      { type: 'spacer' },
       {
         type: 'stack',
         direction: 'row',
@@ -432,6 +435,7 @@ function renderCard(item) {
           text(ratioText(item.remainRatio), 'caption2', 'semibold', '#CBD5E1', { maxLines: 1 }),
         ],
       },
+      { type: 'spacer' },
       text(expireLine(item), 'caption2', 'regular', '#CBD5E1', { maxLines: 1, minScale: 0.55 }),
     ],
   };
@@ -452,9 +456,12 @@ function renderSmallCard(item) {
     padding: [10, 12],
     backgroundColor: '#FFFFFF12',
     borderRadius: 12,
+    flex: 1,
     children: [
       text(name, 'subheadline', 'semibold', '#FFFFFF', { maxLines: 1, minScale: 0.6 }),
+      { type: 'spacer' },
       text(remainText(item), 'title3', 'bold', colorForRemain(item.remainRatio), { maxLines: 1, minScale: 0.6 }),
+      { type: 'spacer' },
       {
         type: 'stack',
         direction: 'row',
@@ -465,6 +472,7 @@ function renderSmallCard(item) {
           text(ratioText(item.remainRatio), 'caption2', 'semibold', '#CBD5E1', { maxLines: 1 }),
         ],
       },
+      { type: 'spacer' },
       text(expireLine(item), 'caption1', 'regular', '#CBD5E1', { maxLines: 1, minScale: 0.55 }),
     ],
   };
