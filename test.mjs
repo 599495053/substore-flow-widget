@@ -17,7 +17,7 @@ const makeCtx = (family) => ({
       const name = decodeURIComponent(url.split('/api/sub/flow/')[1]);
       body = flows[name] || { error: { message: 'not found' } };
     }
-    return { status: 200, text: async () => JSON.stringify(body) };
+    return { status: 200, text: async () => JSON.stringify(body), headers: { get: () => null } };
   } }
 });
 
