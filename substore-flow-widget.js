@@ -377,8 +377,7 @@ function header(cfg, payload, stale) {
     children: [
       {
         type: 'image',
-        src: stale ? 'sf-symbol:exclamationmark.triangle.fill' : 'sf-symbol:chart.bar.xaxis',
-        color: stale ? '#F59E0B' : '#60A5FA',
+        src: 'https://raw.githubusercontent.com/599495053/tubiaoku/main/icon/sub-store.png',
         width: 16,
         height: 16,
       },
