@@ -1,69 +1,53 @@
-# Egern Sub-Store 套餐流量小组件
+# Sub-Store 套餐流量小组件 for Egern
 
-读取 Sub-Store 已添加的订阅，不需要在小组件里重复填写机场订阅链接。
+在 iOS 桌面显示 Sub-Store 订阅的套餐流量使用情况。
 
 ## 功能
 
-- 从 Sub-Store `/api/subs` 获取订阅列表。
-- 从 `/api/sub/flow/:name` 获取套餐流量信息。
-- 显示：剩余流量、总流量、剩余比例、下次重置时间、套餐到期/剩余时间。
-- 无到期时间的订阅自动识别为「长期使用」。
-- 支持多个订阅名，主屏中组件默认显示 3 个，大组件显示 6 个，小组件/锁屏显示 1 个。
-- 支持缓存：请求失败时显示上一次成功数据。
+- 显示每个订阅的已用流量、剩余流量、总流量、使用百分比
+- 进度条可视化流量消耗
+- 自动识别无到期时间的订阅，显示「长期有效」
+- 隐藏本地节点等无法获取流量的订阅
+- 支持小号、中号、大号三种主屏尺寸
+- 请求失败自动使用缓存数据
 
-## 文件
+## 设置方法
 
-- `substore-flow-widget.js`：Egern generic 小组件脚本（配置说明见文件头部注释）。
-- `substore-storage-probe-widget.js`：实验性存储探测脚本，用来测试能否直接读取 Egern 里 Sub-Store 的本地存储。
-- `egern-config-snippet.yaml`：可复制到 Egern 配置的示例片段。
-
-## Egern 设置方法
-
-### 方式一：UI 手动添加（推荐）
-
-1. Egern → 工具 → 脚本 → 右上角 `+`。
-2. 名称：`substore-flow-widget`
-3. 类型：`generic`
-4. 文件位置：本地，文件名：`substore-flow-widget.js`
-5. 编辑文件，把 `substore-flow-widget.js` 的内容复制进去并保存。
-6. 在脚本 Env 里配置：
-   - `SUB_STORE_BASE_URL`：默认 `http://sub.store`。自建后端填完整地址。
-   - `SUB_NAMES`：订阅名称，多个用英文逗号分隔；留空则显示前几个订阅。
-   - `RESET_DAY`：每月重置日，例如 `1`。
-   - 其余配置见脚本文件头部注释。
-7. Egern → 分析 → 左上角进入小组件画廊 → `+`。
-8. 名称：`Sub-Store 套餐`
-9. 脚本名称：选择 `substore-flow-widget`。
-10. iOS 主屏幕长按 → 添加 Egern 小组件 → 编辑小组件选择 `Sub-Store 套餐`。
-
-### 方式二：配置片段
-
-把 `egern-config-snippet.yaml` 里的 `scriptings` 和 `widgets` 合并进你的 Egern 配置。
+1. Egern → 工具 → 脚本 → `+`
+2. 名称：`substore-flow-widget`，类型：`generic`
+3. 将 `substore-flow-widget.js` 内容粘贴进去
+4. 在 Env 中配置（见下方）
+5. Egern → 分析 → 小组件画廊 → `+` → 选择脚本
+6. iOS 主屏添加 Egern 小组件
 
 ## 环境变量
 
-详见 `substore-flow-widget.js` 文件头部注释。核心变量：
-
 | 变量 | 默认值 | 说明 |
-| --- | --- | --- |
-| `SUB_NAMES` | 空 | 订阅名称，逗号分隔；留空自动识别 |
+|---|---|---|
+| `SUB_NAMES` | 空 | 订阅名，逗号分隔；留空自动识别 |
 | `SUB_STORE_BASE_URL` | `http://sub.store` | Sub-Store 后端地址 |
-| `RESET_DAY` | 空 | 每月重置日 |
-| `HIDE_ERRORS` | `false` | 隐藏无法获取流量的订阅 |
-| `REFRESH_MINUTES` | `30` | 刷新间隔，最小 5 分钟 |
-| `MAX_ITEMS` | 按尺寸自动 | 最多显示多少个订阅 |
+| `RESET_DAY` | 空 | 每月重置日，如 `1` |
+| `HIDE_ERRORS` | `true` | 隐藏无法获取流量的订阅 |
+| `REFRESH_MINUTES` | `30` | 刷新间隔 |
+| `MAX_ITEMS` | 按尺寸自动 | 最大显示数 |
+| `OPEN_URL` | `https://sub-store.vercel.app` | 点击跳转地址 |
 
-## 关于重置时间
+### 推荐配置
 
-优先顺序：
+```
+SUB_NAMES=机场A,机场B
+RESET_DAY=1
+HIDE_ERRORS=true
+```
 
-1. Sub-Store `/api/sub/flow/:name` 返回的 `remainingDays`。
-2. 环境变量 `RESET_RULES`、`RESET_DAY`、`START_DATE + CYCLE_DAYS`。
-3. 订阅 URL 片段参数里的 `resetDay`、`startDate + cycleDays`。
-4. 都没有则显示空。
+### 重置日高级用法
 
-详情和示例见 `substore-flow-widget.js` 头部注释。
+不同订阅不同重置日：在订阅 URL 后追加 `#resetDay=1`
 
-## 注意
+## 组件尺寸
 
-`sub.store` 是 Sub-Store 模块常用的本地域名入口。请确保你的 Egern Sub-Store 模块已启用。若使用自建 Sub-Store 后端，建议直接把 `SUB_STORE_BASE_URL` 填成自建后端地址。
+| 尺寸 | 显示内容 |
+|---|---|
+| 小号 | 1 个订阅，详细信息 |
+| 中号 | 2 个订阅 + 合计 |
+| 大号 | 6 个订阅 + 合计 |
