@@ -18,19 +18,20 @@ export default async function (ctx) {
     const subs = await fetchSubs(ctx, cfg);
     const filtered = pickSubs(subs, cfg);
     if (!filtered.length) {
-      return errorView(cfg, '未找到订阅', '本地无订阅数据，请确认 Sub-Store 已启用或填写 SUB_NAMES');
+      if (cache && cache.items && cache.items.length) return render(cfg, cache, true, '无新订阅数据');
+      return errorView(cfg, '未找到订阅', '请确认 Sub-Store 已启用，或在 Env 填写 SUB_NAMES');
     }
 
     const items = await Promise.all(
       filtered.slice(0, cfg.maxItems).map((s) => fetchFlow(ctx, cfg, s))
     );
 
-    const visible = cfg.hideErrors ? items.filter((i) => !i.error) : items;
-    if (!visible.length) {
-      // 所有订阅都失败时，显示每个订阅的错误
-      if (cache && cache.items && cache.items.length) return render(cfg, cache, true, '部分订阅获取失败');
-      return errorView(cfg, '流量获取失败', items.map((i) => i.name + ': ' + i.error).join('\n').slice(0, 120));
-    }
+    // 优先显示成功的结果，如果全部失败则显示所有（含错误）
+    let visible = items.filter((i) => !i.error);
+    if (!visible.length) visible = items;
+    // hideErrors 只在有成功结果时生效
+    if (cfg.hideErrors && visible !== items) visible = items.filter((i) => !i.error);
+    if (!visible.length) visible = items;
 
     const payload = { at: Date.now(), items: visible };
     writeCache(ctx, payload);
