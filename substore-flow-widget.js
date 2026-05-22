@@ -338,12 +338,15 @@ function renderWidget(cfg, payload, stale, staleMsg) {
     if (summary) children.push(summaryCard(summary));
   }
 
+  children.push({ type: 'spacer' });
+
   if (fam === 'systemSmall') {
     children.push(renderSmallCard(shown[0]));
   } else {
     for (const item of shown) children.push(renderCard(item));
   }
 
+  children.push({ type: 'spacer' });
   children.push(footer(cfg, payload, stale, staleMsg));
   return root(cfg, children, stale);
 }
@@ -416,13 +419,16 @@ function renderCard(item) {
     type: 'stack',
     direction: 'column',
     width: '100%',
+    flex: 1,
     gap: 5,
     padding: [9, 10],
     backgroundColor: '#FFFFFF12',
     borderRadius: 12,
     children: [
       text(name, 'subheadline', 'semibold', '#FFFFFF', { maxLines: 1, minScale: 0.6 }),
+      { type: 'spacer' },
       text(remainText(item), 'subheadline', 'bold', colorForRemain(item.remainRatio), { maxLines: 1, minScale: 0.6 }),
+      { type: 'spacer' },
       {
         type: 'stack',
         direction: 'row',
@@ -433,6 +439,7 @@ function renderCard(item) {
           text(ratioText(item.remainRatio), 'caption2', 'semibold', '#CBD5E1', { maxLines: 1 }),
         ],
       },
+      { type: 'spacer' },
       text(expireLine(item), 'caption2', 'regular', '#CBD5E1', { maxLines: 1, minScale: 0.55 }),
     ],
   };
