@@ -1,0 +1,21 @@
+scriptings:
+  - generic:
+      name: substore-flow-widget
+      script_url: substore-flow-widget.js
+      timeout: 30
+      env:
+        # 订阅名，多个用英文逗号分隔；留空自动识别有流量的订阅
+        SUB_NAMES: "良心云,守候2"
+        # 后端地址，默认 http://sub.store（Egern 模块通常不用改）
+        # 自建后端改成你的地址，例如 http://192.168.1.10:3000
+        SUB_STORE_BASE_URL: "http://sub.store"
+        # 每月重置日，例如 1 表示每月 1 号；留空从订阅 URL 或 API 获取
+        RESET_DAY: "1"
+        # 隐藏无法获取套餐流量的本地节点源
+        HIDE_ERRORS: "true"
+        REFRESH_MINUTES: "30"
+        MAX_ITEMS: "2"
+
+widgets:
+  - name: Sub-Store 套餐
+    script_name: substore-flow-widget
