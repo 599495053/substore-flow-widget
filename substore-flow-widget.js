@@ -338,15 +338,12 @@ function renderWidget(cfg, payload, stale, staleMsg) {
     if (summary) children.push(summaryCard(summary));
   }
 
-  children.push({ type: 'spacer' });
-
   if (fam === 'systemSmall') {
     children.push(renderSmallCard(shown[0]));
   } else {
     for (const item of shown) children.push(renderCard(item));
   }
 
-  children.push({ type: 'spacer' });
   children.push(footer(cfg, payload, stale, staleMsg));
   return root(cfg, children, stale);
 }
@@ -377,7 +374,8 @@ function header(cfg, payload, stale) {
     children: [
       {
         type: 'image',
-        src: 'https://raw.githubusercontent.com/599495053/tubiaoku/main/icon/sub-store.png',
+        src: stale ? 'sf-symbol:exclamationmark.triangle.fill' : 'sf-symbol:chart.bar.xaxis',
+        color: stale ? '#F59E0B' : '#60A5FA',
         width: 16,
         height: 16,
       },
@@ -423,9 +421,7 @@ function renderCard(item) {
     borderRadius: 12,
     children: [
       text(name, 'subheadline', 'semibold', '#FFFFFF', { maxLines: 1, minScale: 0.6 }),
-      { type: 'spacer' },
       text(remainText(item), 'subheadline', 'bold', colorForRemain(item.remainRatio), { maxLines: 1, minScale: 0.6 }),
-      { type: 'spacer' },
       {
         type: 'stack',
         direction: 'row',
@@ -436,7 +432,6 @@ function renderCard(item) {
           text(ratioText(item.remainRatio), 'caption2', 'semibold', '#CBD5E1', { maxLines: 1 }),
         ],
       },
-      { type: 'spacer' },
       text(expireLine(item), 'caption2', 'regular', '#CBD5E1', { maxLines: 1, minScale: 0.55 }),
     ],
   };
@@ -454,14 +449,12 @@ function renderSmallCard(item) {
     type: 'stack',
     direction: 'column',
     gap: 4,
-    padding: [12, 14],
+    padding: [10, 12],
     backgroundColor: '#FFFFFF12',
-    borderRadius: 14,
+    borderRadius: 12,
     children: [
       text(name, 'subheadline', 'semibold', '#FFFFFF', { maxLines: 1, minScale: 0.6 }),
-      { type: 'spacer' },
       text(remainText(item), 'title3', 'bold', colorForRemain(item.remainRatio), { maxLines: 1, minScale: 0.6 }),
-      { type: 'spacer' },
       {
         type: 'stack',
         direction: 'row',
@@ -472,7 +465,6 @@ function renderSmallCard(item) {
           text(ratioText(item.remainRatio), 'caption2', 'semibold', '#CBD5E1', { maxLines: 1 }),
         ],
       },
-      { type: 'spacer' },
       text(expireLine(item), 'caption1', 'regular', '#CBD5E1', { maxLines: 1, minScale: 0.55 }),
     ],
   };
@@ -509,11 +501,9 @@ function renderAccessoryRectangular(cfg, item, stale) {
 
   const children = [
     text(displayName(item), 'caption1', 'semibold', '#FFFFFF', { maxLines: 1, minScale: 0.55 }),
-    { type: 'spacer' },
     text(remainText(item), 'headline', 'bold', colorForRemain(item.remainRatio), { maxLines: 1, minScale: 0.6 }),
   ];
   if (info) {
-    children.push({ type: 'spacer' });
     children.push(text(info, 'caption2', 'regular', '#CBD5E1', { maxLines: 1, minScale: 0.5 }));
   }
 
