@@ -17,14 +17,20 @@ export default async function (ctx) {
   try {
     const subs = await fetchSubs(ctx, cfg);
     const filtered = pickSubs(subs, cfg);
-    if (!filtered.length) return errorView(cfg, '未找到订阅', '请检查 SUB_NAMES 或 Sub-Store 配置');
+    if (!filtered.length) {
+      return errorView(cfg, '未找到订阅', '本地无订阅数据，请确认 Sub-Store 已启用或填写 SUB_NAMES');
+    }
 
     const items = await Promise.all(
       filtered.slice(0, cfg.maxItems).map((s) => fetchFlow(ctx, cfg, s))
     );
 
     const visible = cfg.hideErrors ? items.filter((i) => !i.error) : items;
-    if (!visible.length) return errorView(cfg, '无可用数据', '所有订阅均获取流量失败');
+    if (!visible.length) {
+      // 所有订阅都失败时，显示每个订阅的错误
+      if (cache && cache.items && cache.items.length) return render(cfg, cache, true, '部分订阅获取失败');
+      return errorView(cfg, '流量获取失败', items.map((i) => i.name + ': ' + i.error).join('\n').slice(0, 120));
+    }
 
     const payload = { at: Date.now(), items: visible };
     writeCache(ctx, payload);
@@ -51,7 +57,7 @@ function parseConfig(ctx) {
     baseUrl: trimSlash(env.SUB_STORE_BASE_URL || 'http://sub.store'),
     maxItems: intClamp(env.MAX_ITEMS, maxMap[fam] || 2, 1, 12),
     refreshMin: intClamp(env.REFRESH_MINUTES, 30, 5, 1440),
-    hideErrors: toBool(env.HIDE_ERRORS, true),
+    hideErrors: toBool(env.HIDE_ERRORS, false),
     resetDay: env.RESET_DAY || '',
     openUrl: env.OPEN_URL || 'https://sub-store.vercel.app',
   };
@@ -64,16 +70,20 @@ function parseConfig(ctx) {
 async function fetchSubs(ctx, cfg) {
   const stored = readStoredSubs(ctx);
   if (stored.length) return stored;
-  const json = await httpGet(ctx, cfg.baseUrl + '/api/subs');
-  const data = json && json.data !== undefined ? json.data : json;
-  if (Array.isArray(data)) return data;
-  if (data && typeof data === 'object') return Object.values(data);
-  throw new Error('订阅列表格式异常');
+  try {
+    const json = await httpGet(ctx, cfg.baseUrl + '/api/subs');
+    const data = json && json.data !== undefined ? json.data : json;
+    if (Array.isArray(data)) return data.filter(Boolean);
+    if (data && typeof data === 'object') return Object.values(data).filter(Boolean);
+  } catch (e) {
+    throw new Error('无法连接 ' + cfg.baseUrl + '，请确认 Sub-Store 已启用');
+  }
+  throw new Error('订阅列表为空或格式异常');
 }
 
 function pickSubs(subs, cfg) {
   const list = Array.isArray(subs) ? subs : [];
-  if (!cfg.names.length) return list.filter((s) => s && s.name && (s.url || s.subUserinfo || s.source === 'remote'));
+  if (!cfg.names.length) return list.filter((s) => s && s.name);
   return cfg.names.map((n) => {
     const found = list.find((s) => s && s.name === n);
     return found || { name: n, missing: true };
