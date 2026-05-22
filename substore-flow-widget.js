@@ -415,6 +415,7 @@ function renderCard(item) {
   return {
     type: 'stack',
     direction: 'column',
+    width: '100%',
     gap: 5,
     padding: [9, 10],
     backgroundColor: '#FFFFFF12',
@@ -452,6 +453,7 @@ function renderSmallCard(item) {
   return {
     type: 'stack',
     direction: 'column',
+    width: '100%',
     gap: 4,
     padding: [10, 12],
     backgroundColor: '#FFFFFF12',
